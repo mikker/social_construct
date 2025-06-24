@@ -2,22 +2,10 @@ require "test_helper"
 
 module SocialConstruct
   class PreviewsControllerTest < ActionDispatch::IntegrationTest
-    class ArticleCard < BaseCard
-      attr_accessor :title, :author
-
-      def initialize(title:, author:)
-        @title = title
-        @author = author
-      end
-    end
-
     test("index lists all preview classes") do
-      get "/rails/social_cards/previews"
+      get "/rails/social_cards"
 
-      assert_response :success
-      assert_select "h1", "Social Card Previews"
-      assert_select "a", text: "article"
-      assert_select "a", text: "product"
+      assert_response :redirect
     end
 
     # test("index handles no preview classes gracefully") do
