@@ -19,7 +19,7 @@ class PostSocialCard < ApplicationSocialCard
     {
       title: @post.title,
       author: @post.author_name,
-      avatar: image_to_data_url(@post.author.avatar)
+      avatar: attachment_data_url(@post.author.avatar)
     }
   end
 end
@@ -70,8 +70,8 @@ Convert ActiveStorage attachments to Base64 `data://` URLs:
 ```ruby
 def template_assigns
   {
-    cover_image: image_to_data_url(@post.cover_image),
-    avatar: image_to_data_url(@post.author.avatar, resize_to_limit: [200, 200])
+    cover_image: attachment_data_url(@post.cover_image),
+    avatar: attachment_data_url(@post.author.avatar, resize_to_limit: [200, 200])
   }
 end
 ```
