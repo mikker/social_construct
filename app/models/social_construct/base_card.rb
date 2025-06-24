@@ -1,3 +1,6 @@
+require "base64"
+require "tempfile"
+
 module SocialConstruct
   class BaseCard
     include ActionView::Helpers
@@ -196,16 +199,8 @@ module SocialConstruct
       end
     end
 
-    def logo_data_url
-      @logo_data_url ||= begin
-        logo_path = Rails.root.join("app/assets/images/funnymost-logotype.png")
-        if File.exist?(logo_path)
-          logo_data = File.read(logo_path, mode: "rb")
-          "data:image/png;base64,#{Base64.strict_encode64(logo_data)}"
-        else
-          nil
-        end
-      end
+    def template_path
+      Rails.application.config.social_construct.template_path
     end
 
     def log_debug(message, level = :info)

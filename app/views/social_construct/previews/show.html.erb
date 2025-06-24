@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="h-full">
 <head>
-  <title><%= @preview_class.name.humanize %> - Social Card Previews</title>
+  <title><%= @preview_class.name.sub(/Preview$/, '').underscore.humanize %> - Social Card Previews</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="h-full bg-gray-50">
@@ -16,7 +16,7 @@
             Back to all previews
           <% end %>
         </nav>
-        <h1 class="text-2xl font-semibold leading-6 text-gray-900"><%= @preview_class.name.humanize %></h1>
+        <h1 class="text-2xl font-semibold leading-6 text-gray-900"><%= @preview_class.name.sub(/Preview$/, '').underscore.humanize %></h1>
       </div>
     </header>
     <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -27,18 +27,18 @@
             <li class="px-6 py-4">
               <div class="flex items-center justify-between">
                 <div>
-                  <%= link_to social_construct.preview_example_path(@preview_name, example), class: "text-lg font-medium text-indigo-600 hover:text-indigo-500" do %>
+                  <%= link_to social_construct.example_preview_path(@preview_name, example), class: "text-lg font-medium text-indigo-600 hover:text-indigo-500" do %>
                     <%= example.to_s.humanize %>
                   <% end %>
                 </div>
                 <div class="ml-4 flex flex-shrink-0 space-x-2">
-                  <%= link_to social_construct.preview_example_path(@preview_name, example, format: :html), class: "inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" do %>
+                  <%= link_to social_construct.example_preview_path(@preview_name, example, format: :html), class: "inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" do %>
                     <svg class="-ml-0.5 mr-1.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
                     </svg>
                     HTML
                   <% end %>
-                  <%= link_to social_construct.preview_example_path(@preview_name, example, format: :png), class: "inline-flex items-center rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500" do %>
+                  <%= link_to social_construct.example_preview_path(@preview_name, example, format: :png), class: "inline-flex items-center rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500" do %>
                     <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>

@@ -1,0 +1,108 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Social Construct is a Rails engine for generating social media preview cards (Open Graph images) with built-in preview functionality. It uses headless Chrome via Ferrum to render HTML templates as PNG images.
+
+## Common Development Commands
+
+### Testing
+```bash
+# Run all tests
+rake test
+
+# Run specific test file
+bin/rails test test/social_construct_test.rb
+
+# Run specific test method
+bin/rails test test/social_construct_test.rb -n test_method_name
+```
+
+### Code Quality
+```bash
+# Run RuboCop
+bin/rubocop
+
+# Run RuboCop with auto-fix
+bin/rubocop -a
+```
+
+### Development Server
+```bash
+# Start development server (from test/dummy)
+cd test/dummy && bin/rails server
+
+# Access preview interface at
+# http://localhost:3000/rails/social_cards
+```
+
+### Gem Building
+```bash
+# Build gem
+rake build
+
+# Install locally
+rake install
+```
+
+## Architecture Overview
+
+### Core Components
+
+1. **BaseCard (`app/models/social_construct/base_card.rb`)**
+   - Core abstraction for card generation
+   - Renders HTML templates to 1200x630px PNG images
+   - Uses Ferrum (headless Chrome) for screenshots
+   - Supports debug mode and Docker environments
+
+2. **Controller Concern (`app/controllers/concerns/social_construct/controller.rb`)**
+   - Provides `send_social_card` method for controllers
+   - Handles caching with configurable TTL
+   - Supports both PNG and HTML output formats
+
+3. **Preview System (`app/controllers/social_construct/previews_controller.rb`)**
+   - Development-only interface at `/rails/social_cards`
+   - Auto-discovers preview classes in `app/social_cards/previews/*_preview.rb`
+   - Dual format support for debugging
+
+### Key Patterns
+
+- **Template Resolution**: Card class name → underscored → template path
+- **Caching**: Built-in Rails.cache integration with binary PNG storage
+- **Image Handling**: Converts Active Storage attachments to data URLs
+- **Error Handling**: Falls back to transparent PNG on errors
+
+### Directory Structure
+
+```
+app/
+├── controllers/concerns/social_construct/  # Controller integration
+├── controllers/social_construct/          # Preview UI
+├── models/social_construct/              # BaseCard class
+└── views/social_construct/               # Preview templates
+
+lib/
+├── generators/                           # Installation generator
+└── social_construct/                     # Engine configuration
+
+test/
+└── dummy/                               # Test Rails application
+```
+
+### Development Workflow
+
+1. Create card classes inheriting from `BaseCard` or `ApplicationSocialCard`
+2. Add corresponding templates in configured template path
+3. Create preview classes for development testing
+4. Use `send_social_card` in controllers with appropriate cache keys
+5. Test using preview interface or integration tests
+
+### Important Notes
+
+- Always use data URLs for embedded images in templates
+- Keep templates self-contained with inline styles
+- Use debug mode (`debug: true`) when troubleshooting rendering issues
+- Remember that Ferrum requires Chrome/Chromium to be installed
+- In production, use Docker-compatible browser options for sandboxing

@@ -7,7 +7,7 @@ A Rails engine for generating social media preview cards (Open Graph images) wit
 Add to your Gemfile:
 
 ```ruby
-gem "social_construct", path: "vendor/social_construct"
+gem "social_construct"
 ```
 
 Run the installation generator:
@@ -18,6 +18,7 @@ bin/rails generate social_construct:install
 ```
 
 This will:
+
 - Create a configuration initializer
 - Set up ApplicationSocialCard base class
 - Create an example social card with template
@@ -33,7 +34,7 @@ This will:
 # app/social_cards/application_social_card.rb
 class ApplicationSocialCard < SocialConstruct::BaseCard
   include SocialConstruct::CardConcerns
-  
+
   # Set the logo path for your application
   self.logo_path = Rails.root.join("app/assets/images/logo.png")
 end
@@ -48,9 +49,9 @@ class ItemSocialCard < ApplicationSocialCard
     super()
     @item = item
   end
-  
+
   private
-  
+
   def template_assigns
     {
       item: @item,
@@ -102,7 +103,7 @@ class ItemSocialCardPreview
     item = Item.first || Item.new(title: "Example Item")
     ItemSocialCard.new(item)
   end
-  
+
   def with_long_title
     item = Item.new(title: "This is a very long title that will test text wrapping")
     ItemSocialCard.new(item)
@@ -119,7 +120,7 @@ Include the controller concern:
 ```ruby
 class ItemsController < ApplicationController
   include SocialConstruct::Controller
-  
+
   def og
     @item = Item.find(params[:id])
     render ItemSocialCard.new(@item)
@@ -128,6 +129,7 @@ end
 ```
 
 The `render` method automatically handles both formats:
+
 - `.png` - Generates the actual PNG image
 - `.html` - Shows the HTML preview (useful for debugging)
 
@@ -136,14 +138,14 @@ Or with caching:
 ```ruby
 def og
   @item = Item.find(params[:id])
-  
+
   cache_key = [
     "social-cards",
     "item",
     @item.id,
     @item.updated_at.to_i
   ]
-  
+
   render ItemSocialCard.new(@item), cache_key: cache_key
 end
 ```
@@ -154,8 +156,8 @@ Alternative API:
 def og
   @item = Item.find(params[:id])
   card = ItemSocialCard.new(@item)
-  
-  send_social_card(card, 
+
+  send_social_card(card,
     cache_key: ["social-cards", @item.id, @item.updated_at.to_i],
     expires_in: 7.days
   )
@@ -185,3 +187,4 @@ SocialConstruct::BaseCard.debug = true
 ## License
 
 MIT
+

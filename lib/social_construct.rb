@@ -1,6 +1,9 @@
 require "social_construct/version"
 require "social_construct/engine"
-require "social_construct/card_concerns"
+
+# Dependencies
+require "ferrum"
+require "marcel"
 
 module SocialConstruct
   # Configuration for template paths and other settings

@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rake:*)",
+      "Bash(bundle list:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(bin/rails test:*)",
+      "Bash(bin/rails:*)",
+      "Bash(bundle exec ruby:*)",
+      "Bash(find:*)",
+      "Bash(rm:*)",
+      "Bash(grep:*)",
+      "Bash(bundle exec rails:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": []
+  }
+}
