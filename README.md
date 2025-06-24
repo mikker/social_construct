@@ -1,189 +1,155 @@
-# SocialConstruct
+<img src="https://s3.brnbw.com/Stack-C9apVxz8Pg.webp" width="600">
 
-A Rails engine for generating social media preview cards (Open Graph images) with built-in preview functionality.
+- Design using HTML/CSS
+- Supports images, fonts, caching, ...
+- Built-in previews in development (like mailers)
+- Only requirement is Chrome(ium)
 
-## Installation
+## Example
 
-Add to your Gemfile:
-
-```ruby
-gem "social_construct"
-```
-
-Run the installation generator:
-
-```bash
-bundle install
-bin/rails generate social_construct:install
-```
-
-This will:
-
-- Create a configuration initializer
-- Set up ApplicationSocialCard base class
-- Create an example social card with template
-- Add a shared layout for social cards
-- Mount the preview interface in development
-- Create example preview classes
-
-## Usage
-
-### 1. Create your base social card class
+Create a card class:
 
 ```ruby
-# app/social_cards/application_social_card.rb
-class ApplicationSocialCard < SocialConstruct::BaseCard
-  include SocialConstruct::CardConcerns
-
-  # Set the logo path for your application
-  self.logo_path = Rails.root.join("app/assets/images/logo.png")
-end
-```
-
-### 2. Create specific social card classes
-
-```ruby
-# app/social_cards/item_social_card.rb
-class ItemSocialCard < ApplicationSocialCard
-  def initialize(item)
-    super()
-    @item = item
+class PostSocialCard < ApplicationSocialCard
+  def initialize(post)
+    @post = post
   end
-
-  private
 
   def template_assigns
     {
-      item: @item,
-      cover_image_data_url: image_to_data_url(@item.cover_image, resize_to_limit: [480, 630], saver: {quality: 75}),
-      logo_data_url: logo_data_url
+      title: @post.title,
+      author: @post.author_name,
+      avatar: image_to_data_url(@post.author.avatar)
     }
   end
 end
 ```
 
-### 3. Create templates
-
-Templates go in `app/views/social_cards/` and should match your class names:
+Create a template:
 
 ```erb
-<!-- app/views/social_cards/item_social_card.html.erb -->
+<!-- app/views/social_cards/post_social_card.html.erb -->
+
 <div class="card">
-  <h1><%= item.title %></h1>
-  <!-- Your card HTML -->
+  <img src="<%= avatar %>" class="logo">
+  <h1><%= title %></h1>
+  <p>by <%= author %></p>
 </div>
 ```
 
-### 4. Optional: Use a shared layout
-
-Create `app/views/layouts/social_cards.html.erb` for shared HTML structure:
-
-```erb
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <style>
-      /* Shared styles */
-    </style>
-    <%= yield :head %>
-  </head>
-  <body>
-    <%= yield %>
-  </body>
-</html>
-```
-
-### 5. Create preview classes for development
+Add a controller action:
 
 ```ruby
-# app/social_cards/previews/item_social_card_preview.rb
-class ItemSocialCardPreview
-  def default
-    item = Item.first || Item.new(title: "Example Item")
-    ItemSocialCard.new(item)
-  end
-
-  def with_long_title
-    item = Item.new(title: "This is a very long title that will test text wrapping")
-    ItemSocialCard.new(item)
-  end
-end
-```
-
-Visit `/rails/social_cards` in development to see all your previews.
-
-### 6. Use in your controllers
-
-Include the controller concern:
-
-```ruby
-class ItemsController < ApplicationController
+class PostsController < ApplicationController
   include SocialConstruct::Controller
 
-  def og
-    @item = Item.find(params[:id])
-    render ItemSocialCard.new(@item)
+  # ...
+
+  def social_image
+    @post = Post.find(params[:id])
+
+    send_social_card(
+      PostSocialCard.new(@post),
+      cache_key: [@post.id, @post.updated_at]
+    )
   end
 end
 ```
 
-The `render` method automatically handles both formats:
+## Setup
 
-- `.png` - Generates the actual PNG image
-- `.html` - Shows the HTML preview (useful for debugging)
+```sh
+$ bundle add social_construct && bundle install
+$ bin/rails generate social_construct:install
+```
 
-Or with caching:
+## Images
+
+Convert ActiveStorage attachments to Base64 `data://` URLs:
 
 ```ruby
-def og
-  @item = Item.find(params[:id])
-
-  cache_key = [
-    "social-cards",
-    "item",
-    @item.id,
-    @item.updated_at.to_i
-  ]
-
-  render ItemSocialCard.new(@item), cache_key: cache_key
+def template_assigns
+  {
+    cover_image: image_to_data_url(@post.cover_image),
+    avatar: image_to_data_url(@post.author.avatar, resize_to_limit: [200, 200])
+  }
 end
 ```
 
-Alternative API:
+## Fonts
+
+### Remote fonts
+
+Just import them normally and they should work.
+
+```erb
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+  body { font-family: 'Inter', sans-serif; }
+</style>
+```
+
+### Local fonts
+
+Store fonts in `app/assets/fonts/` and embed as `data://` URLs:
 
 ```ruby
-def og
-  @item = Item.find(params[:id])
-  card = ItemSocialCard.new(@item)
-
-  send_social_card(card,
-    cache_key: ["social-cards", @item.id, @item.updated_at.to_i],
-    expires_in: 7.days
-  )
+class LocalFontsCard < ApplicationSocialCard
+  def template_assigns
+    {
+      custom_font_css: generate_font_face(
+        "custom-font-name",
+        "Recursive_VF_1.085--subset-GF_latin_basic.woff2",
+        weight: "300 1000"
+      )
+    }
+  end
 end
 ```
 
-## Configuration
+And include in template:
 
-Configure in your initializer:
+```erb
+<style>
+  <%= custom_font_css %>
 
-```ruby
-# config/initializers/social_construct.rb
-
-# Template path (default: "social_cards")
-Rails.application.config.social_construct.template_path = "custom_path"
-
-# Enable debug logging (default: false)
-SocialConstruct::BaseCard.debug = true
+  body {
+    font-family: 'custom-font-name', sans-serif;
+  }
+</style>
 ```
 
-## Requirements
+## Previews
 
-- Rails 7.0+
-- Ferrum (headless Chrome driver)
-- Marcel (MIME type detection)
+Mount the preview engine:
+
+```ruby
+Rails.application.routes.draw do
+  if Rails.env.development?
+    mount(SocialConstruct::Engine => "/rails/social_cards")
+  end
+end
+```
+
+Create preview classes:
+
+```ruby
+# app/social_cards/previews/post_social_card_preview.rb
+class PostSocialCardPreview
+  def default
+    PostSocialCard.new(Post.first)
+  end
+
+  def long_title
+    post = Post.new(title: "A very long title that demonstrates text wrapping behavior")
+    PostSocialCard.new(post)
+  end
+end
+```
+
+Visit `http://localhost:3000/rails/social_cards` to preview all cards.
 
 ## License
 
 MIT
+
