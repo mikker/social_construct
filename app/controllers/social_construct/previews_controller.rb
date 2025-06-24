@@ -40,8 +40,6 @@ module SocialConstruct
     def find_preview_classes
       return [] unless (paths = Rails.application.config.social_construct.preview_paths)
 
-      pp(paths)
-
       paths
         .map do |path|
           next [] unless path.exist?

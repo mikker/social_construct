@@ -1,4 +1,4 @@
-class ExampleSocialCardPreview < SocialConstruct::Preview
+class ExampleSocialCardPreview
   def default
     ExampleSocialCard.new(
       title: "Welcome to SocialConstruct",
