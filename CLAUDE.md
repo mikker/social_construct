@@ -6,12 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Social Construct is a Rails engine for generating social media preview cards (Open Graph images) with built-in preview functionality. It uses headless Chrome via Ferrum to render HTML templates as PNG images.
 
+The base directory hosts the gem code. For an example Rails app, see test/dummy/.
+`bin/rails` commands will work on this dummy.
+
 ## Common Development Commands
 
 ### Testing
+
 ```bash
 # Run all tests
-rake test
+bin/rails test
 
 # Run specific test file
 bin/rails test test/social_construct_test.rb
@@ -21,15 +25,14 @@ bin/rails test test/social_construct_test.rb -n test_method_name
 ```
 
 ### Code Quality
-```bash
-# Run RuboCop
-bin/rubocop
 
-# Run RuboCop with auto-fix
-bin/rubocop -a
+```bash
+# Format code with rubyfmt
+rubyfmt -i **/*.rb
 ```
 
 ### Development Server
+
 ```bash
 # Start development server (from test/dummy)
 cd test/dummy && bin/rails server
@@ -39,6 +42,7 @@ cd test/dummy && bin/rails server
 ```
 
 ### Gem Building
+
 ```bash
 # Build gem
 rake build
@@ -52,12 +56,14 @@ rake install
 ### Core Components
 
 1. **BaseCard (`app/models/social_construct/base_card.rb`)**
+
    - Core abstraction for card generation
    - Renders HTML templates to 1200x630px PNG images
    - Uses Ferrum (headless Chrome) for screenshots
    - Supports debug mode and Docker environments
 
 2. **Controller Concern (`app/controllers/concerns/social_construct/controller.rb`)**
+
    - Provides `send_social_card` method for controllers
    - Handles caching with configurable TTL
    - Supports both PNG and HTML output formats
@@ -106,3 +112,4 @@ test/
 - Use debug mode (`debug: true`) when troubleshooting rendering issues
 - Remember that Ferrum requires Chrome/Chromium to be installed
 - In production, use Docker-compatible browser options for sandboxing
+

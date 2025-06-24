@@ -86,8 +86,33 @@ module SocialConstruct
       # Wait for the page to fully load
       browser.network.wait_for_idle
 
-      # Add extra wait for complex pages with large images
-      sleep(0.5)
+      # Wait for all images and fonts to load
+      browser.execute(
+        <<~JS
+          return new Promise((resolve) => {
+            // Check if all images are loaded
+            const images = Array.from(document.querySelectorAll('img'));
+            const imagePromises = images.map(img => {
+              if (img.complete) return Promise.resolve();
+              return new Promise(res => {
+                img.addEventListener('load', res);
+                img.addEventListener('error', res);
+              });
+            });
+
+            // Check document fonts
+            const fontPromise = document.fonts?.ready || Promise.resolve();
+
+            // Wait for everything
+            Promise.all([...imagePromises, fontPromise]).then(() => {
+              // Small delay to ensure rendering is complete
+              requestAnimationFrame(() => {
+                setTimeout(resolve, 50);
+              });
+            });
+          });
+        JS
+      )
 
       # Log page readiness
       if debug
@@ -108,6 +133,21 @@ module SocialConstruct
         log_debug("Body HTML length: #{body_html_length}")
       end
 
+      # Ensure content is painted before screenshot
+      browser.execute(
+        <<~JS
+          // Force layout and paint
+          document.body.offsetHeight;
+          // Check if we have visible content
+          const hasContent = document.body.textContent.trim().length > 0 ||
+                            document.querySelectorAll('img').length > 0;
+          if (!hasContent) {
+            console.warn('Page appears to have no visible content');
+          }
+          return hasContent;
+        JS
+      )
+
       screenshot = browser.screenshot(
         encoding: :binary,
         quality: 100,
@@ -115,27 +155,6 @@ module SocialConstruct
       )
 
       log_debug("Screenshot generated, size: #{screenshot.bytesize} bytes")
-
-      # Check if screenshot might be blank (very small file size indicates mostly white/single color)
-      # Less than 10KB usually means it's mostly one color
-      if screenshot.bytesize < 10_000
-        log_debug("Screenshot seems too small, might be blank. Retrying with delay...", :warn)
-
-        # Wait a bit more and try again
-        sleep(1)
-
-        # Force a paint
-        browser.execute(
-          "document.body.style.display = 'none'; document.body.offsetHeight; document.body.style.display = 'flex';"
-        )
-
-        screenshot = browser.screenshot(
-          encoding: :binary,
-          quality: 100,
-          full: false
-        )
-        log_debug("Retry screenshot size: #{screenshot.bytesize} bytes")
-      end
 
       screenshot
     rescue => e
