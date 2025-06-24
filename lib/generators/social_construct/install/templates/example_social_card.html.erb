@@ -1,7 +1,7 @@
-<% content_for :head do %>
+<%% content_for :head do %>
   <style>
     body {
-      background-color: <%= background_color %>;
+      background-color: <%%= background_color %>;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -51,19 +51,19 @@
       pointer-events: none;
     }
   </style>
-<% end %>
+<%% end %>
 
 <div class="decoration"></div>
 
 <div class="content">
-  <h1 class="title"><%= title %></h1>
-  <% if subtitle.present? %>
-    <p class="subtitle"><%= subtitle %></p>
-  <% end %>
+  <h1 class="title"><%%= title %></h1>
+  <%% if subtitle.present? %>
+    <p class="subtitle"><%%= subtitle %></p>
+  <%% end %>
 </div>
 
-<% if logo_data_url %>
+<%% if logo_data_url %>
   <div class="logo">
-    <img src="<%= logo_data_url %>" alt="Logo">
+    <img src="<%%= logo_data_url %>" alt="Logo">
   </div>
-<% end %>
+<%% end %>

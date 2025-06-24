@@ -28,7 +28,7 @@ module SocialConstruct
       end
 
       def create_example_preview
-        template("example_social_card_preview.rb", "app/social_cards/previews/example_social_card_preview.rb")
+        template("example_social_card_preview.rb", "test/social_cards/previews/example_social_card_preview.rb")
       end
 
       def add_route
@@ -41,10 +41,6 @@ module SocialConstruct
         RUBY
 
         route(route_string)
-      end
-
-      def display_post_install
-        readme("POST_INSTALL") if behavior == :invoke
       end
     end
   end
