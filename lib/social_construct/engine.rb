@@ -9,6 +9,7 @@ module SocialConstruct
     config.before_initialize do
       require "ferrum"
       require "marcel"
+
     end
   end
 end

@@ -11,4 +11,3 @@ class ExampleSocialCardPreview
     AnnouncementCard.new
   end
 end
-
