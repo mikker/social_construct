@@ -4,4 +4,6 @@ SocialConstruct::Engine.routes.draw do
       get(":example_name", action: :preview, as: :example)
     end
   end
+
+  root(to: redirect("previews"))
 end

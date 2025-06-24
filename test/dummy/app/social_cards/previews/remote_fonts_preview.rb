@@ -1,3 +1,0 @@
-class RemoteFontsPreview
-end
-

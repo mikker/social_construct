@@ -3,7 +3,6 @@ module SocialConstruct
     extend ActiveSupport::Concern
 
     included do
-      # Register social card mime type if not already registered
       Mime::Type.register "image/png", :png unless Mime[:png]
     end
 
@@ -35,16 +34,14 @@ module SocialConstruct
 
     # Allow using render with social cards
     def render(*args)
-      if args.first.is_a?(SocialConstruct::BaseCard)
-        card = args.first
-        options = args.second || {}
+      return super unless args.first.is_a?(SocialConstruct::BaseCard)
 
-        respond_to do |format|
-          format.png { send_social_card(card, **options) }
-          format.html { render(html: card.render.html_safe, layout: false) }
-        end
-      else
-        super
+      card = args.first
+      options = args.second || {}
+
+      respond_to do |format|
+        format.png { send_social_card(card, **options) }
+        format.html { render(html: card.render.html_safe, layout: false) }
       end
     end
 

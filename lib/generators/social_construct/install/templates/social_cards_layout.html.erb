@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="<%= I18n.locale %>">
+<html lang="<%%= I18n.locale %>">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -10,13 +10,13 @@
         padding: 0;
         box-sizing: border-box;
       }
-      
+
       html {
         width: 1200px;
         height: 630px;
         background: white;
       }
-      
+
       body {
         width: 1200px;
         height: 630px;
@@ -28,23 +28,23 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
-      
+
       /* Ensure images don't have borders */
       img {
         border: 0;
         max-width: 100%;
       }
-      
+
       /* Default text rendering */
       h1, h2, h3, h4, h5, h6, p {
         font-weight: normal;
         margin: 0;
       }
     </style>
-    <%= yield :head %>
+    <%%= yield :head %>
   </head>
   <body>
-    <%= yield %>
+    <%%= yield %>
   </body>
 </html>
 
