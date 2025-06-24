@@ -1,5 +1,7 @@
 module SocialConstruct
   class PreviewsController < ActionController::Base
+    include SocialConstruct::Controller
+
     before_action :ensure_previews_enabled
 
     def index
@@ -29,10 +31,7 @@ module SocialConstruct
 
       @card = preview_class.new.send(example_name)
 
-      respond_to do |format|
-        format.html { render(html: @card.render.html_safe, layout: false) }
-        format.png { send_data(@card.to_png, type: "image/png", disposition: "inline") }
-      end
+      render(@card)
     end
 
     private
