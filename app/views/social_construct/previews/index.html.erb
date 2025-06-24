@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html class="h-full">
+<head>
+  <title>Social Card Previews</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full bg-gray-50">
+  <div class="min-h-full">
+    <header class="bg-white shadow-sm">
+      <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+        <h1 class="text-2xl font-semibold leading-6 text-gray-900">Social Card Previews</h1>
+      </div>
+    </header>
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+  
+      <div class="overflow-hidden bg-white shadow rounded-lg">
+        <% if @preview_classes.any? %>
+          <ul role="list" class="divide-y divide-gray-200">
+            <% @preview_classes.each do |preview_class| %>
+              <li class="px-6 py-4 hover:bg-gray-50">
+                <% preview_name = preview_class.name.underscore.sub(/_preview$/, '') %>
+                <%= link_to social_construct.preview_path(preview_name), class: "block" do %>
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-lg font-medium text-indigo-600 hover:text-indigo-500">
+                        <%= preview_class.name.humanize %>
+                      </p>
+                      <p class="mt-1 text-sm text-gray-500">
+                        <%= preview_class.name %>
+                      </p>
+                    </div>
+                    <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <div class="px-6 py-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-semibold text-gray-900">No preview classes</h3>
+            <p class="mt-1 text-sm text-gray-500">Create preview classes in <code class="font-mono text-xs">app/social_cards/previews/</code></p>
+          </div>
+        <% end %>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

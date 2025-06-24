@@ -1,0 +1,34 @@
+===============================================================================
+
+  SocialConstruct has been successfully installed! 🎉
+
+  Next steps:
+  
+  1. Update the logo path in app/social_cards/application_social_card.rb
+     to point to your actual logo file.
+  
+  2. Run your Rails server and visit:
+     http://localhost:3000/rails/social_cards
+     
+     You should see the example social card previews.
+  
+  3. Create your own social card classes:
+     - Inherit from ApplicationSocialCard
+     - Create matching templates in app/views/social_cards/
+     - Add preview classes in app/social_cards/previews/
+  
+  4. Use in your controllers:
+     
+     class YourController < ApplicationController
+       include SocialConstruct::Controller
+       
+       def og
+         @model = Model.find(params[:id])
+         render YourSocialCard.new(@model)
+       end
+     end
+  
+  For more information, see:
+  https://github.com/brnbw/social_construct
+
+===============================================================================
