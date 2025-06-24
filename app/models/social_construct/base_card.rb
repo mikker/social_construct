@@ -196,7 +196,7 @@ module SocialConstruct
       {}
     end
 
-    def image_to_data_url(attachment, variant_options = {})
+    def attachment_data_url(attachment, variant_options = {})
       return nil unless attachment.attached?
 
       begin
