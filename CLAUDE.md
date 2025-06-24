@@ -22,6 +22,12 @@ bin/rails test test/social_construct_test.rb
 
 # Run specific test method
 bin/rails test test/social_construct_test.rb -n test_method_name
+
+# Run controller tests only
+bin/rails test test/controllers
+
+# Run model tests only
+bin/rails test test/models
 ```
 
 ### Code Quality
@@ -49,7 +55,14 @@ rake build
 
 # Install locally
 rake install
+
+# Release to RubyGems (requires permissions)
+rake release
 ```
+
+### CI/CD
+
+The project uses GitHub Actions for CI testing on Ubuntu with Chrome installed. Ruby version is set to 3.4.4.
 
 ## Architecture Overview
 
@@ -79,6 +92,7 @@ rake install
 - **Caching**: Built-in Rails.cache integration with binary PNG storage
 - **Image Handling**: Converts Active Storage attachments to data URLs
 - **Error Handling**: Falls back to transparent PNG on errors
+- **Preview Discovery**: Auto-loads `*_preview.rb` files from `app/social_cards/previews/`
 
 ### Directory Structure
 
@@ -112,3 +126,12 @@ test/
 - Use debug mode (`debug: true`) when troubleshooting rendering issues
 - Remember that Ferrum requires Chrome/Chromium to be installed
 - In production, use Docker-compatible browser options for sandboxing
+- Large assets (>2MB) will fail data URL conversion with Marcel::MimeType::InvalidMagic error
+- Preview classes require public methods that return card instances
+
+## Dependencies
+
+- Rails >= 7.0
+- Ferrum >= 0.13 (headless Chrome driver)
+- Marcel >= 1.0 (MIME type detection)
+- Ruby 3.4.4 (per CI configuration)
