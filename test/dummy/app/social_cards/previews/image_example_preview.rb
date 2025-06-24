@@ -1,0 +1,3 @@
+class ImageExamplePreview
+end
+

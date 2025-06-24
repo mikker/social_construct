@@ -187,4 +187,3 @@ SocialConstruct::BaseCard.debug = true
 ## License
 
 MIT
-

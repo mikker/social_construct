@@ -6,14 +6,14 @@ module SocialConstruct
     include ActionView::Helpers
     include Rails.application.routes.url_helpers
 
-    attr_reader :width, :height
-
-    # Class-level debug setting
     cattr_accessor :debug, default: false
 
-    def initialize
-      @width = 1200
-      @height = 630
+    def width
+      @width || 1200
+    end
+
+    def height
+      @height || 630
     end
 
     def render
@@ -33,7 +33,7 @@ module SocialConstruct
       browser_options = {
         headless: true,
         timeout: 30,
-        window_size: [@width, @height]
+        window_size: [width, height]
       }
 
       # Add Docker-specific options in production
@@ -81,7 +81,7 @@ module SocialConstruct
         browser.goto("data:text/html;charset=utf-8,#{encoded_html}")
       end
 
-      browser.set_viewport(width: @width, height: @height)
+      browser.set_viewport(width: width, height: height)
 
       # Wait for the page to fully load
       browser.network.wait_for_idle
@@ -210,12 +210,91 @@ module SocialConstruct
 
         content_type = blob.content_type || "image/jpeg"
         image_data = blob.download
+        file_size = image_data.bytesize
 
-        "data:#{content_type};base64,#{Base64.strict_encode64(image_data)}"
+        # Check image size limitations
+        # 2MB hard limit
+        if file_size > 2_000_000
+          log_debug("Image is #{file_size} bytes (#{file_size / 1024 / 1024}MB), exceeds 2MB data URL limit", :error)
+          return nil
+          # 500KB warning threshold
+        elsif file_size > 500_000
+          log_debug(
+            "Image is #{file_size} bytes (#{file_size / 1024}KB), consider optimizing for better performance",
+            :warn
+          )
+        end
+
+        encoded_data = Base64.strict_encode64(image_data)
+        log_debug("Image loaded: #{file_size} bytes (#{encoded_data.bytesize} bytes encoded)")
+
+        "data:#{content_type};base64,#{encoded_data}"
       rescue => e
         log_debug("Failed to convert image to data URL: #{e.message}", :error)
         nil
       end
+    end
+
+    # Local font helper - converts font file to data URL
+    def font_to_data_url(font_path)
+      full_path = if font_path.start_with?("/")
+        font_path
+      else
+        Rails.root.join("app", "assets", "fonts", font_path)
+      end
+
+      return nil unless File.exist?(full_path)
+
+      begin
+        font_data = File.read(full_path)
+        file_size = font_data.bytesize
+
+        # Check file size limitations
+        # Most browsers have data URL limits around 2MB, but performance degrades after ~500KB
+        # 2MB hard limit
+        if file_size > 2_000_000
+          log_debug(
+            "Font file #{font_path} is #{file_size} bytes (#{file_size / 1024 / 1024}MB), exceeds 2MB data URL limit",
+            :error
+          )
+          return nil
+          # 500KB warning threshold
+        elsif file_size > 500_000
+          log_debug(
+            "Font file #{font_path} is #{file_size} bytes (#{file_size / 1024}KB), consider optimizing for better performance",
+            :warn
+          )
+        end
+
+        content_type = font_content_type(full_path)
+        encoded_data = Base64.strict_encode64(font_data)
+
+        # Base64 encoding increases size by ~33%
+        encoded_size = encoded_data.bytesize
+        log_debug("Font #{font_path} loaded: #{file_size} bytes (#{encoded_size} bytes encoded)")
+
+        "data:#{content_type};base64,#{encoded_data}"
+      rescue => e
+        log_debug("Failed to convert font to data URL: #{e.message}", :error)
+        nil
+      end
+    end
+
+    # Generate @font-face declaration for local fonts
+    def generate_font_face(family_name, font_path, weight: "normal", style: "normal", display: "swap")
+      data_url = font_to_data_url(font_path)
+      return "" unless data_url
+
+      <<~CSS
+        @font-face {
+          font-family: '#{family_name}';
+          src: url('#{data_url}');
+          font-weight: #{weight};
+          font-style: #{style};
+          font-display: #{display};
+        }
+      CSS
+        .html_safe
     end
 
     def template_path
@@ -225,6 +304,85 @@ module SocialConstruct
     def log_debug(message, level = :info)
       return unless debug
       Rails.logger.send(level, "[SocialCard] #{message}")
+    end
+
+    # Local image helper - converts image file to data URL
+    def image_data_url(image_path)
+      full_path = if image_path.start_with?("/")
+        image_path
+      else
+        Rails.root.join("app", "assets", "images", image_path)
+      end
+
+      return nil unless File.exist?(full_path)
+
+      begin
+        image_data = File.read(full_path)
+        file_size = image_data.bytesize
+
+        # Check file size limitations
+        if file_size > 2_000_000
+          log_debug(
+            "Image file #{image_path} is #{file_size} bytes (#{file_size / 1024 / 1024}MB), exceeds 2MB data URL limit",
+            :error
+          )
+          return nil
+        elsif file_size > 500_000
+          log_debug(
+            "Image file #{image_path} is #{file_size} bytes (#{file_size / 1024}KB), consider optimizing for better performance",
+            :warn
+          )
+        end
+
+        content_type = image_content_type(full_path)
+        encoded_data = Base64.strict_encode64(image_data)
+        log_debug("Image #{image_path} loaded: #{file_size} bytes (#{encoded_data.bytesize} bytes encoded)")
+
+        "data:#{content_type};base64,#{encoded_data}"
+      rescue => e
+        log_debug("Failed to convert image to data URL: #{e.message}", :error)
+        nil
+      end
+    end
+
+    # Determine MIME type for image files
+    def image_content_type(image_path)
+      extension = File.extname(image_path).downcase
+      case extension
+      when ".png"
+        "image/png"
+      when ".jpg", ".jpeg"
+        "image/jpeg"
+      when ".gif"
+        "image/gif"
+      when ".svg"
+        "image/svg+xml"
+      when ".webp"
+        "image/webp"
+      else
+        # fallback
+        "image/png"
+      end
+    end
+
+    # Determine MIME type for font files
+    def font_content_type(font_path)
+      extension = File.extname(font_path).downcase
+      case extension
+      when ".woff2"
+        "font/woff2"
+      when ".woff"
+        "font/woff"
+      when ".ttf"
+        "font/truetype"
+      when ".otf"
+        "font/opentype"
+      when ".eot"
+        "application/vnd.ms-fontobject"
+      else
+        # fallback
+        "font/truetype"
+      end
     end
   end
 end

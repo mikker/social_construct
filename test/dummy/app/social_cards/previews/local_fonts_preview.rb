@@ -1,0 +1,3 @@
+class LocalFontsPreview
+end
+

@@ -1,0 +1,3 @@
+class EverythingPreview
+end
+

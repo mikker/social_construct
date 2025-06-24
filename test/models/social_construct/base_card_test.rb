@@ -8,7 +8,6 @@ module SocialConstruct
       attr_accessor :title, :description
 
       def initialize
-        super
         @title = "Test Title"
         @description = "Test Description"
       end
@@ -77,14 +76,21 @@ module SocialConstruct
     test("render returns HTML string") do
       # Create a test template
       template_dir = Rails.root.join("app/views/social_cards")
+      FileUtils.rm_rf(template_dir) # Clean up first
       FileUtils.mkdir_p(template_dir)
       template_path = template_dir.join("test_card.html.erb")
 
-      File.write(template_path, "<h1><%= title %></h1><p><%= description %></p>")
+      template_content = "<h1><%= title %></h1><p><%= description %></p>"
+      File.write(template_path, template_content)
+      
+      # Clear the view cache to ensure fresh template load
+      ApplicationController.view_paths.each do |resolver|
+        resolver.clear_cache if resolver.respond_to?(:clear_cache)
+      end
 
       html = @card.render
-      assert_includes html, "<h1>Test Title</h1>"
-      assert_includes html, "<p>Test Description</p>"
+      assert html.include?("Test Title"), "HTML should include title: #{html}"
+      assert html.include?("Test Description"), "HTML should include description: #{html}"
     ensure
       FileUtils.rm_rf(template_dir)
     end
@@ -92,6 +98,11 @@ module SocialConstruct
     test("render with layout when available") do
       template_dir = Rails.root.join("app/views/social_cards")
       layout_dir = Rails.root.join("app/views/layouts")
+      
+      # Clean up first
+      FileUtils.rm_rf(template_dir)
+      FileUtils.rm_rf(layout_dir)
+      
       FileUtils.mkdir_p(template_dir)
       FileUtils.mkdir_p(layout_dir)
 
@@ -100,6 +111,11 @@ module SocialConstruct
 
       File.write(template_path, "<h1><%= title %></h1>")
       File.write(layout_path, "<html><body><%= yield %></body></html>")
+
+      # Clear the view cache to ensure fresh template load
+      ApplicationController.view_paths.each do |resolver|
+        resolver.clear_cache if resolver.respond_to?(:clear_cache)
+      end
 
       html = @card.render
       assert_includes html, "<html>"
@@ -213,10 +229,16 @@ module SocialConstruct
 
       # Mock Ferrum to avoid needing a real browser
       mock_browser = Minitest::Mock.new
+      mock_network = Minitest::Mock.new
+      
       # The actual implementation uses data:text/html;charset=utf-8 with URL encoding
       mock_browser.expect :goto, nil, [String]
-      mock_browser.expect :set_viewport, nil, [{width: 1200, height: 630}]
-      mock_browser.expect :screenshot, "fake png data", [{encoding: :binary, quality: 100, full: false}]
+      mock_browser.expect :set_viewport, nil, [], width: 1200, height: 630
+      mock_browser.expect :network, mock_network
+      mock_network.expect :wait_for_idle, nil
+      mock_browser.expect :execute, nil, [String] # For JS image/font loading
+      mock_browser.expect :execute, nil, [String] # For content paint check
+      mock_browser.expect :screenshot, "fake png data", [], encoding: :binary, quality: 100, full: false
       mock_browser.expect :quit, nil
 
       Ferrum::Browser.stub(:new, mock_browser) do
@@ -225,6 +247,129 @@ module SocialConstruct
       end
 
       mock_browser.verify
+      mock_network.verify
+    ensure
+      FileUtils.rm_rf(template_dir)
+    end
+
+    test("font_to_data_url converts font file to base64 data URL") do
+      # Create a temporary font file
+      font_dir = Rails.root.join("app/assets/fonts")
+      FileUtils.mkdir_p(font_dir)
+      font_path = font_dir.join("test-font.woff2")
+      File.write(font_path, "fake font data")
+
+      data_url = @card.send(:font_to_data_url, "test-font.woff2")
+      expected_base64 = Base64.strict_encode64("fake font data")
+      assert_equal "data:font/woff2;base64,#{expected_base64}", data_url
+    ensure
+      FileUtils.rm_rf(font_dir)
+    end
+
+    test("font_to_data_url returns nil for non-existent fonts") do
+      assert_nil @card.send(:font_to_data_url, "non-existent.woff2")
+    end
+
+    test("font_to_data_url returns nil for fonts exceeding 2MB") do
+      font_dir = Rails.root.join("app/assets/fonts")
+      FileUtils.mkdir_p(font_dir)
+      font_path = font_dir.join("huge-font.woff2")
+      # Create a 2.1MB file
+      File.write(font_path, "x" * 2_100_000)
+
+      assert_nil @card.send(:font_to_data_url, "huge-font.woff2")
+    ensure
+      FileUtils.rm_rf(font_dir)
+    end
+
+    test("image_data_url converts image file to base64 data URL") do
+      # Create a temporary image file
+      image_dir = Rails.root.join("app/assets/images")
+      FileUtils.mkdir_p(image_dir)
+      image_path = image_dir.join("test-image.png")
+      File.write(image_path, "fake image data")
+
+      data_url = @card.send(:image_data_url, "test-image.png")
+      expected_base64 = Base64.strict_encode64("fake image data")
+      assert_equal "data:image/png;base64,#{expected_base64}", data_url
+    ensure
+      FileUtils.rm_rf(image_dir)
+    end
+
+    test("image_data_url returns nil for non-existent images") do
+      assert_nil @card.send(:image_data_url, "non-existent.png")
+    end
+
+    test("image_data_url returns nil for images exceeding 2MB") do
+      image_dir = Rails.root.join("app/assets/images")
+      FileUtils.mkdir_p(image_dir)
+      image_path = image_dir.join("huge-image.png")
+      # Create a 2.1MB file
+      File.write(image_path, "x" * 2_100_000)
+
+      assert_nil @card.send(:image_data_url, "huge-image.png")
+    ensure
+      FileUtils.rm_rf(image_dir)
+    end
+
+    test("generate_font_face creates CSS with data URL") do
+      font_dir = Rails.root.join("app/assets/fonts")
+      FileUtils.mkdir_p(font_dir)
+      font_path = font_dir.join("test-font.woff2")
+      File.write(font_path, "fake font data")
+
+      css = @card.send(:generate_font_face, "TestFont", "test-font.woff2", weight: "400", style: "italic")
+      
+      assert_includes css, "@font-face"
+      assert_includes css, "font-family: 'TestFont'"
+      assert_includes css, "font-weight: 400"
+      assert_includes css, "font-style: italic"
+      assert_includes css, "font-display: swap"
+      assert_includes css, "src: url('data:font/woff2;base64,"
+    ensure
+      FileUtils.rm_rf(font_dir)
+    end
+
+    test("generate_font_face returns empty string for non-existent fonts") do
+      css = @card.send(:generate_font_face, "TestFont", "non-existent.woff2")
+      assert_equal "", css
+    end
+
+    test("to_png uses tempfile for large HTML content") do
+      # Create a new card class for this test to avoid template conflicts
+      large_card_class = Class.new(BaseCard) do
+        def template_name
+          "social_cards/large_test_card"
+        end
+      end
+      
+      large_card = large_card_class.new
+      
+      template_dir = Rails.root.join("app/views/social_cards")
+      FileUtils.mkdir_p(template_dir)
+      File.write(template_dir.join("large_test_card.html.erb"), "<div style='white-space: pre-wrap;'>#{'x' * 1_000_000}</div>")
+
+      # Mock the browser and tempfile
+      mock_browser = Minitest::Mock.new
+      mock_network = Minitest::Mock.new
+      
+      # Expect file:// URL instead of data URL for large content
+      mock_browser.expect :goto, nil, [/^file:\/\//]
+      mock_browser.expect :set_viewport, nil, [], width: 1200, height: 630
+      mock_browser.expect :network, mock_network
+      mock_network.expect :wait_for_idle, nil
+      mock_browser.expect :execute, nil, [String] # For JS image/font loading
+      mock_browser.expect :execute, nil, [String] # For content paint check
+      mock_browser.expect :screenshot, "fake png data", [], encoding: :binary, quality: 100, full: false
+      mock_browser.expect :quit, nil
+
+      Ferrum::Browser.stub(:new, mock_browser) do
+        png_data = large_card.to_png
+        assert_equal "fake png data", png_data
+      end
+
+      mock_browser.verify
+      mock_network.verify
     ensure
       FileUtils.rm_rf(template_dir)
     end

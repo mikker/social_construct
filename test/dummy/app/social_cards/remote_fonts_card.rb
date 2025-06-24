@@ -1,0 +1,2 @@
+class RemoteFontsCard < ApplicationSocialCard
+end

@@ -140,10 +140,13 @@ module SocialConstruct
       cache_miss = false
       render_called = false
 
-      mock_card.stub(:to_png, -> {
+      mock_card.stub(
+        :to_png,
+        -> {
           render_called = true
           "new png data"
-        }) do
+        }
+      ) do
         @controller.stub(
           :send_data,
           -> (data, options) {

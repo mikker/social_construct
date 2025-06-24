@@ -112,4 +112,3 @@ test/
 - Use debug mode (`debug: true`) when troubleshooting rendering issues
 - Remember that Ferrum requires Chrome/Chromium to be installed
 - In production, use Docker-compatible browser options for sandboxing
-

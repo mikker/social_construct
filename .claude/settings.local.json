@@ -13,7 +13,9 @@
       "Bash(grep:*)",
       "Bash(bundle exec rails:*)",
       "Bash(curl:*)",
-      "Bash(rubyfmt:*)"
+      "Bash(rubyfmt:*)",
+      "Bash(mv:*)",
+      "Bash(bundle exec rake test:*)"
     ],
     "deny": []
   }
