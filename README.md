@@ -134,7 +134,7 @@ end
 Create preview classes:
 
 ```ruby
-# app/social_cards/previews/post_social_card_preview.rb
+# test/social_cards/previews/post_social_card_preview.rb
 class PostSocialCardPreview
   def default
     PostSocialCard.new(Post.first)
@@ -152,4 +152,3 @@ Visit `http://localhost:3000/rails/social_cards` to preview all cards.
 ## License
 
 MIT
-
